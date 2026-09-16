@@ -3,4 +3,25 @@ name = "kbism"
 version = "0.1.0"
 edition = "2024"
 
+# design.md §3.1 / §16:
+# フェーズ1〜6 は sim 層（bevy 非依存）のみ。bevy は app 層（フェーズ7）で追加する。
+# sim が bevy を import しない規律は tools/check_layering.sh で担保する。
 [dependencies]
+serde = { version = "1", features = ["derive"] }
+ron = "0.11"
+rand = "0.9"
+rand_chacha = { version = "0.9", features = ["serde"] }
+
+[lib]
+name = "kbism"
+path = "src/lib.rs"
+
+[[bin]]
+name = "kbism"
+path = "src/main.rs"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3

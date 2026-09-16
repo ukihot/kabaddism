@@ -1,0 +1,118 @@
+// バランス係数（NFR-07）
+// 再ビルドなしに調整できる。数値をコードへ持ち込まないこと。
+(
+    calendar: (
+        budget_doy: 60,   // 2月30日: 予算編成
+        cup_doy: 330,     // 11月30日: 世界大会
+    ),
+
+    time: (
+        base_sleep: 480.0,
+        sleep_penalty_max: 90.0,
+        commute_base: 90.0,
+        commute_transit_relief: 0.55,
+        care_per_child: 150.0,
+        care_childcare_relief: 0.6,
+        care_per_dependent: 90.0,
+        care_base: 60.0,
+        shopping_card: 20.0,
+        shopping_genkaba: 55.0,
+        shopping_proxy: 15.0,
+        shopping_venue_relief: 0.45,
+        weekend_settlement_minutes: 120.0,
+        slack_reference: 240.0,
+    ),
+
+    // 職業ごとの所定労働時間と生産性。
+    // output: Necessity / Service / BuildWork / None
+    occupations: [
+        (occupation: Farmer,       work_minutes: 480.0, productivity: 1.30, output: Necessity, intermediate: 0.00, motivation_bias: 0.90),
+        (occupation: Manufacturer, work_minutes: 480.0, productivity: 1.10, output: Necessity, intermediate: 0.05, motivation_bias: 1.00),
+        (occupation: Builder,      work_minutes: 480.0, productivity: 0.90, output: BuildWork, intermediate: 0.10, motivation_bias: 0.95),
+        (occupation: Medic,        work_minutes: 480.0, productivity: 0.70, output: Service,   intermediate: 0.10, medical_supply: 1.0, motivation_bias: 0.90),
+        (occupation: Cook,         work_minutes: 480.0, productivity: 1.00, output: Service,   intermediate: 0.45, motivation_bias: 0.95),
+        (occupation: Clerk,        work_minutes: 480.0, productivity: 0.90, output: Service,   intermediate: 0.50, motivation_bias: 1.00),
+        (occupation: Coach,        work_minutes: 420.0, productivity: 0.60, output: Service,   intermediate: 0.05, coach_supply: 1.0, motivation_bias: 1.20),
+        (occupation: Official,     work_minutes: 480.0, productivity: 0.50, output: Service,   intermediate: 0.05, motivation_bias: 1.00),
+        (occupation: Student,      work_minutes: 330.0, productivity: 0.00, output: None,      motivation_bias: 1.30),
+        (occupation: Caregiver,    work_minutes: 0.0,   productivity: 0.00, output: None,      motivation_bias: 0.80),
+        (occupation: Athlete,      work_minutes: 120.0, productivity: 0.00, output: None,      motivation_bias: 1.50),
+        (occupation: Retired,      work_minutes: 0.0,   productivity: 0.00, output: None,      motivation_bias: 0.50),
+    ],
+
+    economy: (
+        // 標準価値（K/単位）。商品ごとに固定し、実質 GDP の評価に使う。
+        value_necessity: 1.0,
+        value_service: 1.5,
+        value_buildwork: 2.0,
+        need_necessity: 1.0,
+        need_service: 0.5,
+        // 期待負担倍率が 1.0 近傍になるように置く
+        genkaba_win_mult: 0.6,
+        genkaba_lose_mult: 1.4,
+        genkaba_fatigue: 0.02,
+        credit_team_min: 0.5,
+        credit_team_max: 2.0,
+        credit_record_min: 0.6,
+        credit_record_max: 1.2,
+        settlement_rate: 0.30,
+        required_settlement_ratio: 0.8,
+        credit_shrink: 0.9,
+        labor_settlement_rate: 0.010,
+        public_relief_cap: 6.0,
+        shop_team_cost: 1.2,
+        deficit_days_shrink: 40,
+        deficit_days_close: 120,
+        guild_coverage_floor: 0.9,
+        claim_power_exponent: 0.6,
+        delivery_per_scale: 900.0,
+        spoil_rate: 0.02,
+        procurement_ratio: 0.70,
+        guild_reserve_rate: 0.5,
+        weekend_fatigue: 0.05,
+    ),
+
+    training: (
+        growth_k: 0.055,
+        decay_k: 0.00055,
+        decay_age_start: 28.0,
+        decay_age_slope: 0.09,
+        fatigue_k: 0.022,
+        intensity: 1.0,
+        coach_ratio: 12.0,
+        quality_floor: 0.25,
+        ability_cap: 100.0,
+        experience_rate: 0.01,
+    ),
+
+    events: (
+        recover_sleep: 0.00016,
+        recover_housing: 0.035,
+        recover_medical: 0.03,
+        injury_days_base: 21.0,
+    ),
+
+    cup: (
+        squad_size: 7,
+        logistic_slope: 0.09,
+        stake_districts: 1,
+        nation_growth_noise: 0.06,
+        cup_fatigue: 0.12,
+    ),
+
+    budget: (
+        revenue_rate: 0.22,
+        public_team_rate: 0.35,
+        construction_rate: 1.0,
+        deficit_carry: 1.0,
+    ),
+
+    // FR-SIM-09: 日次ノイズは明示パラメータ。信号対雑音比をテストで測れるようにする。
+    noise: (
+        production: 0.06,
+        training: 0.10,
+        participation: 0.05,
+        weather_step: 0.08,
+        supply_step: 0.06,
+    ),
+)
