@@ -8,6 +8,8 @@ description = "国民の暮らしを整えてカバディを強くし、世界�
 repository = "https://github.com/ukihot/kabaddism"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
+# `cargo run` はゲーム本体を指す。harness は --bin harness で明示して呼ぶ。
+default-run = "kbism"
 # ゲーム本体であり crates.io へは出さない
 publish = false
 
