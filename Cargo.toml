@@ -8,9 +8,9 @@ edition = "2024"
 # sim が bevy を import しない規律は tools/check_layering.sh で担保する。
 [dependencies]
 serde = { version = "1", features = ["derive"] }
-ron = "0.11"
-rand = "0.9"
-rand_chacha = { version = "0.9", features = ["serde"] }
+ron = { version = "0.12", features = ["integer128"] }  # rand_chacha の word_pos は u128
+rand = "0.10"
+rand_chacha = { version = "0.10", features = ["serde"] }
 
 [lib]
 name = "kbism"

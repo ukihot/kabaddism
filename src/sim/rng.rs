@@ -3,7 +3,7 @@
 //! ストリームを用途別に分けるのは、片方の消費回数の変化がもう片方の結果を変えないようにするため。
 //! イベントが何件発生しても天候は変わらない。
 
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use serde::{Deserialize, Serialize};
 
@@ -58,4 +58,24 @@ pub fn chance(rng: &mut ChaCha8Rng, p: f32) -> bool {
 /// 一様乱数 [lo, hi)。lo == hi なら lo。
 pub fn range(rng: &mut ChaCha8Rng, lo: f32, hi: f32) -> f32 {
     if hi <= lo { lo } else { rng.random_range(lo..hi) }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// RON セーブは ChaCha8Rng の内部状態をそのまま持ち回る（save.rs）。
+    /// rand_chacha / ron のバージョンを上げたとき、往復で位置がずれないことを見る。
+    #[test]
+    fn rngset_survives_ron_roundtrip() {
+        let mut a = RngSet::new(42);
+        for _ in 0..7 {
+            let _ = a.daily.random::<u64>();
+        }
+        let s = ron::ser::to_string(&a).unwrap();
+        let mut b: RngSet = ron::from_str(&s).unwrap();
+        assert_eq!(a.seed, b.seed);
+        assert_eq!(a.daily.random::<u64>(), b.daily.random::<u64>());
+        assert_eq!(a.cup.random::<u64>(), b.cup.random::<u64>());
+    }
 }
