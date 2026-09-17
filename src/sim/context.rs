@@ -71,9 +71,7 @@ impl DistrictContext {
 }
 
 pub fn build(world: &World) -> Vec<DistrictContext> {
-    (0..world.districts.len())
-        .map(|i| build_one(world, DistrictId::from_index(i)))
-        .collect()
+    (0..world.districts.len()).map(|i| build_one(world, DistrictId::from_index(i))).collect()
 }
 
 fn build_one(world: &World, id: DistrictId) -> DistrictContext {

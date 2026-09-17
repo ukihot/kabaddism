@@ -3,9 +3,9 @@
 //! チームの競技力は**住民の能力から導出する**。政策が数値を直接書き込むことはしない。
 //! 政策が動かせるのは「誰が使えるか（利用権）」「何回出られるか（出場枠）」だけ。
 
+use super::Game;
 use super::ids::{DistrictId, NationId, TeamId};
 use super::world::{BusinessKind, BusinessState, Occupation, TeamKind, World};
-use super::Game;
 
 pub fn refresh(game: &mut Game) {
     // 地区ごとの能力指標を先に作る（借用の衝突を避ける）

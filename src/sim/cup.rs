@@ -96,13 +96,19 @@ pub fn propose_squad(game: &Game) -> Vec<PersonId> {
         .map(|(i, p)| (i, p.life.ability.value * p.life.condition.factor()))
         .collect();
     // 同値のときは添字順。決定論のため（NFR-01）。
-    cands.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal).then(a.0.cmp(&b.0)));
+    cands.sort_by(|a, b| {
+        b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal).then(a.0.cmp(&b.0))
+    });
     cands.into_iter().take(size).map(|(i, _)| PersonId::from_index(i)).collect()
 }
 
 /// 大会前の確定処理。ここで計算した値を UI に渡し、結果処理でも同じ値を使う。
 pub fn prepare(game: &mut Game) -> CupPreview {
-    let squad = if game.pending_squad.is_empty() { propose_squad(game) } else { game.pending_squad.clone() };
+    let squad = if game.pending_squad.is_empty() {
+        propose_squad(game)
+    } else {
+        game.pending_squad.clone()
+    };
 
     // 代表チームへ登録する
     let nt = game.world.national_team;
@@ -121,7 +127,9 @@ pub fn prepare(game: &mut Game) -> CupPreview {
         .filter(|(_, d)| !d.is_home)
         .map(|(i, _)| (i, district_value(game, i)))
         .collect();
-    own.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal).then(a.0.0.cmp(&b.0.0)));
+    own.sort_by(|a, b| {
+        a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal).then(a.0.0.cmp(&b.0.0))
+    });
     let staked: Vec<DistrictId> = own.iter().take(n_stake).map(|(i, _)| *i).collect();
     let max_loss: f32 = own.iter().take(n_stake).map(|(_, v)| *v).sum();
 
@@ -134,13 +142,16 @@ pub fn prepare(game: &mut Game) -> CupPreview {
             .filter(|(_, d)| !d.is_home)
             .map(|(i, _)| (i, district_value(game, i)))
             .collect();
-        theirs.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal).then(a.0.0.cmp(&b.0.0)));
+        theirs.sort_by(|a, b| {
+            a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal).then(a.0.0.cmp(&b.0.0))
+        });
         if let Some((id, v)) = theirs.first() {
             rival_stakes.push((nation.id, *id, *v));
         }
     }
 
-    let opponents: Vec<NationId> = game.nations.iter().filter(|n| !n.is_home).map(|n| n.id).collect();
+    let opponents: Vec<NationId> =
+        game.nations.iter().filter(|n| !n.is_home).map(|n| n.id).collect();
 
     CupPreview {
         year: game.date.year,
@@ -166,8 +177,7 @@ pub fn run(game: &mut Game, preview: &CupPreview) -> CupResult {
     }
 
     let mut matches = Vec::new();
-    let mut wins: Vec<(NationId, u32, f32)> =
-        strength.iter().map(|(id, s)| (*id, 0, *s)).collect();
+    let mut wins: Vec<(NationId, u32, f32)> = strength.iter().map(|(id, s)| (*id, 0, *s)).collect();
 
     for i in 0..strength.len() {
         for j in (i + 1)..strength.len() {
@@ -308,7 +318,9 @@ fn report(game: &mut Game, result: &CupResult) {
             .history
             .iter()
             .rev()
-            .find(|h| h.text_key == "history.issue_resolved" || h.text_key == "history.project_done")
+            .find(|h| {
+                h.text_key == "history.issue_resolved" || h.text_key == "history.project_done"
+            })
             .map(|h| h.detail.clone())
             .unwrap_or_default();
         let opponent = if m.a == game.home {

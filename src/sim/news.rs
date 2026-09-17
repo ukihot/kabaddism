@@ -83,7 +83,14 @@ impl NewsLog {
             return t.id;
         }
         let id = ThreadId(self.threads.len() as u16);
-        self.threads.push(Thread { id, topic, label, opened: date, closed: None, articles: Vec::new() });
+        self.threads.push(Thread {
+            id,
+            topic,
+            label,
+            opened: date,
+            closed: None,
+            articles: Vec::new(),
+        });
         id
     }
 
@@ -225,12 +232,7 @@ fn person_milestones(game: &mut Game) {
             } else {
                 0
             };
-            (
-                p.name.clone(),
-                game.world.district(p.home).name.clone(),
-                level,
-                p.status,
-            )
+            (p.name.clone(), game.world.district(p.home).name.clone(), level, p.status)
         };
         let b = Builder { text: &defs.text };
         let ability = format!("{:.0}", game.world.people[id.index()].life.ability.value);
@@ -256,7 +258,7 @@ fn person_milestones(game: &mut Game) {
 
 fn local_topics(game: &mut Game, today: &DailyStats) {
     // 5日に一度、もっとも参加率が伸びた地区を取り上げる
-    if game.date.doy % 5 != 0 {
+    if !game.date.doy.is_multiple_of(5) {
         return;
     }
     let Some(prev) = game.stats.days.len().checked_sub(6).and_then(|i| game.stats.days.get(i))
@@ -286,7 +288,8 @@ fn local_topics(game: &mut Game, today: &DailyStats) {
     let key = if delta > 0.0 { "local.participation_up" } else { "local.participation_down" };
     let b = Builder { text: &defs.text };
     let pct = format!("{:.0}", delta.abs() * 100.0);
-    let mut a = b.article(game.date, ArticleKind::Local, key, &[("place", &place), ("pct", &pct)], 4);
+    let mut a =
+        b.article(game.date, ArticleKind::Local, key, &[("place", &place), ("pct", &pct)], 4);
     a.subjects.push(Subject::District(id));
     game.news.push(a);
 }
@@ -313,6 +316,7 @@ fn trivia(game: &mut Game) {
         &[("official", &policy.official_name), ("name", &policy.name), ("place", &place)],
         1,
     );
-    a.subjects.push(Subject::District(DistrictId::from_index(di.min(game.world.districts.len() - 1))));
+    a.subjects
+        .push(Subject::District(DistrictId::from_index(di.min(game.world.districts.len() - 1))));
     game.news.push(a);
 }

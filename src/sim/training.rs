@@ -138,13 +138,12 @@ pub fn lifecycle(game: &mut Game) {
                     p.life.occupation = super::world::Occupation::Retired;
                 }
             }
-            super::world::PersonStatus::Paused => {
+            super::world::PersonStatus::Paused
                 // 生活余力が戻れば復帰する（対応策は一つではない）
-                if p.life.life_slack > 0.45 && p.life.condition.fatigue < 0.6 {
+                if p.life.life_slack > 0.45 && p.life.condition.fatigue < 0.6 => {
                     p.status = super::world::PersonStatus::Active;
                     p.life.motivation = (p.life.motivation + 0.2).min(1.0);
                 }
-            }
             _ => {}
         }
     }

@@ -15,9 +15,7 @@ use super::context::{self, DistrictContext};
 use super::defs::{BudgetField, Defs, Good};
 use super::environment;
 use super::ids::{CohortId, DistrictId, Target};
-use super::world::{
-    BusinessKind, BusinessState, Life, PayMethod, World,
-};
+use super::world::{BusinessKind, BusinessState, Life, PayMethod, World};
 use super::{Game, rng, teams};
 
 /// 世帯数。すべての K建て量は「1世帯あたり」で持ち、ここで規模に戻す。
@@ -60,7 +58,8 @@ pub fn produce(game: &mut Game, env: super::world::Environment) {
         for d in districts.iter_mut() {
             for c in d.cohorts.iter_mut() {
                 let w = c.headcount as f32;
-                let out = produce_one(&mut c.life, w, &defs, weather, supply, &mut game.rng.daily, amp);
+                let out =
+                    produce_one(&mut c.life, w, &defs, weather, supply, &mut game.rng.daily, amp);
                 prod_n += out.0;
                 prod_s += out.1;
                 prod_b += out.2;
@@ -71,7 +70,8 @@ pub fn produce(game: &mut Game, env: super::world::Environment) {
             if p.status == super::world::PersonStatus::Emigrated {
                 continue;
             }
-            let out = produce_one(&mut p.life, 1.0, &defs, weather, supply, &mut game.rng.daily, amp);
+            let out =
+                produce_one(&mut p.life, 1.0, &defs, weather, supply, &mut game.rng.daily, amp);
             prod_n += out.0;
             prod_s += out.1;
             prod_b += out.2;
@@ -87,8 +87,9 @@ pub fn produce(game: &mut Game, env: super::world::Environment) {
     l.intermediate_necessity = inter_n;
 
     // 実質 GDP: 標準価値を固定して評価する
-    l.gdp = (prod_n * eco.value_necessity + prod_s * eco.value_service + prod_b * eco.value_buildwork)
-        - inter_n * eco.value_necessity;
+    l.gdp =
+        (prod_n * eco.value_necessity + prod_s * eco.value_service + prod_b * eco.value_buildwork)
+            - inter_n * eco.value_necessity;
 
     game.world.stock_necessity += prod_n - inter_n;
     // サービスは在庫できない。建設仕事は1日だけ持ち越す。
@@ -123,7 +124,11 @@ fn produce_one(
     let c = life.condition.factor();
     let env_factor = match occ.output {
         Good::Necessity => {
-            if life.occupation == super::world::Occupation::Farmer { weather } else { supply }
+            if life.occupation == super::world::Occupation::Farmer {
+                weather
+            } else {
+                supply
+            }
         }
         Good::BuildWork => supply,
         _ => 1.0,
@@ -201,8 +206,8 @@ pub fn settle_daily(game: &mut Game) {
         let hh = households(row.weight, row.household_size);
         let gross_household = if hh > 0.0 { value_pc * row.weight / hh } else { 0.0 };
         // 家賃補助・生活保障は、世帯が負う額を肩代わりする。財源は住宅・生活支援の枠。
-        let support = (ctx.infra.housing_support + ctx.infra.livelihood_support)
-            .min(gross_household);
+        let support =
+            (ctx.infra.housing_support + ctx.infra.livelihood_support).min(gross_household);
         let value_household = gross_household - support;
         support_paid += support * hh;
         let total_value = value_household * hh;
@@ -260,8 +265,7 @@ pub fn settle_daily(game: &mut Game) {
 
     // ── 在庫の更新 ──
     let spoil = game.world.stock_necessity.max(0.0) * eco.spoil_rate;
-    game.world.stock_necessity =
-        (game.world.stock_necessity - consumed_n - spoil).max(0.0);
+    game.world.stock_necessity = (game.world.stock_necessity - consumed_n - spoil).max(0.0);
     let perished = (game.world.stock_service - consumed_s).max(0.0);
     game.world.stock_service = 0.0;
     game.world.agency_capacity = agency_left;
@@ -370,7 +374,11 @@ fn allocate_good(rows: &mut [Row], available: f32, necessity: bool) {
             0.0
         };
         let per_capita = (share / r.weight.max(1e-6)).min(need(r));
-        if necessity { r.alloc_n = per_capita } else { r.alloc_s = per_capita }
+        if necessity {
+            r.alloc_n = per_capita
+        } else {
+            r.alloc_s = per_capita
+        }
         given += per_capita * r.weight;
     }
 
@@ -395,7 +403,11 @@ fn allocate_good(rows: &mut [Row], available: f32, necessity: bool) {
         for r in rows.iter_mut() {
             let a = if necessity { r.alloc_n } else { r.alloc_s };
             let add = (need(r) - a).max(0.0) * ratio;
-            if necessity { r.alloc_n += add } else { r.alloc_s += add }
+            if necessity {
+                r.alloc_n += add
+            } else {
+                r.alloc_s += add
+            }
             used += add * r.weight;
         }
         leftover -= used;

@@ -120,7 +120,9 @@ fn allocate_life(life: &mut Life, ctx: &DistrictContext, defs: &Defs, weekend: b
     };
     let childcare = (ctx.infra.childcare * 0.4 + nursery_avail * 0.6).clamp(0.0, 1.0);
     t.care = tp.care_base
-        + life.household.children * tp.care_per_child * (1.0 - tp.care_childcare_relief * childcare)
+        + life.household.children
+            * tp.care_per_child
+            * (1.0 - tp.care_childcare_relief * childcare)
         + life.household.dependents * tp.care_per_dependent;
 
     // 決済に要する時間: 前日に使った方式と会場の混雑で決まる
@@ -173,7 +175,8 @@ fn apply_practice(
     let practice = (plan.desired * scale * n).max(0.0).min(life.time.leisure);
     life.time.practice = practice;
     life.time.leisure -= practice;
-    life.participation = if plan.desired > 0.0 { (plan.possibility * scale * n).clamp(0.0, 1.0) } else { 0.0 };
+    life.participation =
+        if plan.desired > 0.0 { (plan.possibility * scale * n).clamp(0.0, 1.0) } else { 0.0 };
 }
 
 /// 道場の在籍者数を、実効定員に比例して配分する。
@@ -208,5 +211,8 @@ pub fn mean_practice(world: &World, district: DistrictId) -> f32 {
 
 /// 職業が生産を担うか（生産と競技力の区別: FR-ECO-05）。
 pub fn is_productive(o: Occupation) -> bool {
-    !matches!(o, Occupation::Student | Occupation::Caregiver | Occupation::Retired | Occupation::Athlete)
+    !matches!(
+        o,
+        Occupation::Student | Occupation::Caregiver | Occupation::Retired | Occupation::Athlete
+    )
 }

@@ -203,10 +203,7 @@ pub fn aggregate(game: &Game) -> DailyStats {
         ds.receipt_value = dacc.receipt_value;
         ds.obligation = economy::obligation_by_district(w, id);
         ds.dojo_capacity = w.capacity_of(id, FacilityKind::Dojo);
-        ds.dojo_enrolled = w
-            .facilities_in(id, FacilityKind::Dojo)
-            .map(|(_, f)| f.enrolled)
-            .sum();
+        ds.dojo_enrolled = w.facilities_in(id, FacilityKind::Dojo).map(|(_, f)| f.enrolled).sum();
         ds.coach_seats = w
             .facilities_in(id, FacilityKind::Dojo)
             .filter(|(_, f)| f.is_running())
@@ -257,10 +254,8 @@ pub fn aggregate(game: &Game) -> DailyStats {
     s.credit_limit = acc.mean(acc.credit_limit);
     s.trust = mean_infra(w, game.home, |i| i.trust);
     s.scouting = mean_infra(w, game.home, |i| i.scouting);
-    s.nursery_capacity = w
-        .owned_districts(game.home)
-        .map(|(id, _)| w.capacity_of(id, FacilityKind::Nursery))
-        .sum();
+    s.nursery_capacity =
+        w.owned_districts(game.home).map(|(id, _)| w.capacity_of(id, FacilityKind::Nursery)).sum();
     s.medical_capacity = w
         .owned_districts(game.home)
         .map(|(id, _)| w.capacity_of(id, FacilityKind::Hospital))

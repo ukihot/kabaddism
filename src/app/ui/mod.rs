@@ -28,11 +28,7 @@ pub const WARN: Color = Color::srgb(0.80, 0.45, 0.38);
 /// 日本語を出すため、埋め込みの FiraMono ではなくシステムの sans-serif を引く。
 /// （`system_font_discovery` feature が有効なときだけ解決される）
 pub fn font(size: f32) -> TextFont {
-    TextFont {
-        font: FontSource::SansSerif,
-        font_size: FontSize::Px(size),
-        ..default()
-    }
+    TextFont { font: FontSource::SansSerif, font_size: FontSize::Px(size), ..default() }
 }
 
 pub fn label(text: impl Into<String>, size: f32, color: Color) -> impl Bundle {
@@ -98,12 +94,7 @@ pub fn spawn_root(mut commands: Commands) {
                 BackgroundColor(PANEL),
             ),
             (
-                Node {
-                    width: percent(100),
-                    flex_grow: 1.0,
-                    min_height: px(0),
-                    ..default()
-                },
+                Node { width: percent(100), flex_grow: 1.0, min_height: px(0), ..default() },
                 children![
                     (
                         PolicyPanel,

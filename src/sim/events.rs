@@ -104,18 +104,17 @@ pub fn roll(game: &mut Game) -> Vec<Fired> {
 
 fn candidates(game: &Game, scope: Scope) -> Vec<Target> {
     match scope {
-        Scope::District => game
-            .world
-            .owned_districts(game.home)
-            .map(|(i, _)| Target::District(i))
-            .collect(),
+        Scope::District => {
+            game.world.owned_districts(game.home).map(|(i, _)| Target::District(i)).collect()
+        }
         Scope::Facility => game
             .world
             .facilities
             .iter()
             .enumerate()
             .filter(|(_, f)| {
-                f.state != FacilityState::Closed && game.world.district(f.district).owner == game.home
+                f.state != FacilityState::Closed
+                    && game.world.district(f.district).owner == game.home
             })
             .map(|(i, _)| Target::Facility(FacilityId::from_index(i)))
             .collect(),
@@ -240,9 +239,7 @@ fn trigger_holds(game: &Game, ctxs: &[DistrictContext], t: Trigger, target: Targ
             _ => false,
         },
         Trigger::GuildCoverageBelow(v) => w.guild.coverage < v,
-        Trigger::ReserveBelow(v) => {
-            game.treasury.remaining(super::defs::BudgetField::Reserve) < v
-        }
+        Trigger::ReserveBelow(v) => game.treasury.remaining(super::defs::BudgetField::Reserve) < v,
         Trigger::ProjectStalled => game
             .projects
             .iter()
@@ -329,7 +326,8 @@ fn apply_outcome(game: &mut Game, outcome: &Outcome, target: Target) {
         }
         Outcome::StaffLeave { role, amount, days } => {
             let i = role.index();
-            game.treasury.real.staff_total[i] = (game.treasury.real.staff_total[i] - amount).max(0.0);
+            game.treasury.real.staff_total[i] =
+                (game.treasury.real.staff_total[i] - amount).max(0.0);
             game.dispatches.push(policy::Dispatch {
                 role: *role,
                 amount: -*amount,
@@ -364,10 +362,7 @@ fn apply_outcome(game: &mut Game, outcome: &Outcome, target: Target) {
         }
         Outcome::HoldInvestment { trust } => {
             if let Some(d) = target.district() {
-                game.world
-                    .district_mut(d)
-                    .infra
-                    .add(super::world::InfraField::Trust, -*trust);
+                game.world.district_mut(d).infra.add(super::world::InfraField::Trust, -*trust);
                 for b in game.world.businesses.iter_mut() {
                     if b.district == d && b.state != BusinessState::Closed {
                         b.scale = (b.scale * 0.95).max(0.1);
@@ -377,10 +372,7 @@ fn apply_outcome(game: &mut Game, outcome: &Outcome, target: Target) {
         }
         Outcome::MissSelection => {
             if let Some(d) = target.district() {
-                game.world
-                    .district_mut(d)
-                    .infra
-                    .add(super::world::InfraField::Scouting, -0.1);
+                game.world.district_mut(d).infra.add(super::world::InfraField::Scouting, -0.1);
             }
         }
         Outcome::CongestPayment { minutes } => {

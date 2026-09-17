@@ -17,7 +17,11 @@ pub struct Close;
 #[derive(Component)]
 pub struct CupBody;
 
-pub fn spawn(mut commands: Commands, root: Single<Entity, With<ModalRoot>>, mut game: ResMut<GameRes>) {
+pub fn spawn(
+    mut commands: Commands,
+    root: Single<Entity, With<ModalRoot>>,
+    mut game: ResMut<GameRes>,
+) {
     let preview = game.cup_prepare();
     let t = &game.defs.text;
     let heading = t.get("ui.cup.heading").to_string();

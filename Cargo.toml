@@ -2,6 +2,14 @@
 name = "kbism"
 version = "0.1.0"
 edition = "2024"
+# bevy 0.19 の要求に合わせる。README と CI のツールチェーンもこれに従う。
+rust-version = "1.96"
+description = "国民の暮らしを整えてカバディを強くし、世界大会で領地を獲得する国家育成シミュレーション"
+repository = "https://github.com/ukihot/kabaddism"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+# ゲーム本体であり crates.io へは出さない
+publish = false
 
 # design.md §3.1 / §16:
 # フェーズ1〜6 は sim 層（bevy 非依存）のみ。bevy は app 層（フェーズ7）で追加する。

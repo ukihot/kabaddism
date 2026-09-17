@@ -67,32 +67,32 @@ pub fn spawn(mut commands: Commands, panel: Single<Entity, With<PolicyPanel>>, g
         .collect();
 
     commands.entity(*panel).with_children(|parent| {
-      parent
-        .spawn((
-            DespawnOnExit(Phase::Planning),
-            Node { flex_direction: FlexDirection::Column, ..default() },
-        ))
-        .with_children(|p| {
-        p.spawn(label(heading, 11.0, INK_DIM));
-        p.spawn(label(recommended, 13.0, INK));
-        if rows.is_empty() {
-            p.spawn(label(none, 12.0, INK_DIM));
-        }
-        for row in rows {
-            let ok = row.reason.is_none();
-            p.spawn(button(PolicyChoice { id: row.id, target: row.target }, ok))
-                .with_children(|c| {
-                    c.spawn(label(row.name, 15.0, if ok { INK } else { INK_DIM }));
-                    c.spawn(label(format!("{}　{}", row.place, row.detail), 11.0, INK_DIM));
-                    if let Some(reason) = row.reason {
-                        c.spawn(label(reason, 11.0, WARN));
-                    }
+        parent
+            .spawn((
+                DespawnOnExit(Phase::Planning),
+                Node { flex_direction: FlexDirection::Column, ..default() },
+            ))
+            .with_children(|p| {
+                p.spawn(label(heading, 11.0, INK_DIM));
+                p.spawn(label(recommended, 13.0, INK));
+                if rows.is_empty() {
+                    p.spawn(label(none, 12.0, INK_DIM));
+                }
+                for row in rows {
+                    let ok = row.reason.is_none();
+                    p.spawn(button(PolicyChoice { id: row.id, target: row.target }, ok))
+                        .with_children(|c| {
+                            c.spawn(label(row.name, 15.0, if ok { INK } else { INK_DIM }));
+                            c.spawn(label(format!("{}　{}", row.place, row.detail), 11.0, INK_DIM));
+                            if let Some(reason) = row.reason {
+                                c.spawn(label(reason, 11.0, WARN));
+                            }
+                        });
+                }
+                p.spawn(button(WaitChoice, true)).with_children(|c| {
+                    c.spawn(label(wait, 14.0, ACCENT));
                 });
-        }
-        p.spawn(button(WaitChoice, true)).with_children(|c| {
-            c.spawn(label(wait, 14.0, ACCENT));
-        });
-        });
+            });
     });
 }
 
@@ -126,10 +126,8 @@ pub fn spawn_advancing(
     panel: Single<Entity, With<PolicyPanel>>,
     game: Res<GameRes>,
 ) {
-    let text = game
-        .defs
-        .text
-        .format("ui.policy.advancing", &[("days", &game.pending_days.to_string())]);
+    let text =
+        game.defs.text.format("ui.policy.advancing", &[("days", &game.pending_days.to_string())]);
     commands.entity(*panel).with_children(|p| {
         p.spawn((DespawnOnExit(Phase::Advancing), label(text, 14.0, INK_DIM)));
     });

@@ -1,0 +1,4 @@
+# 既存コードの書き方に合わせる。既定の rustfmt は
+# `if a { b } else { c }` や短い構造体リテラルを必ず展開してしまい、
+# sim 側の1行で読める式が縦に伸びる。
+use_small_heuristics = "Max"

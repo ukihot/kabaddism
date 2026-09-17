@@ -1,0 +1,40 @@
+name: 提案・要望
+description: 新しい仕組み、政策カード、イベント、UI の改善
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        作るもの・作らないものは [doc/requirements.md](../blob/main/doc/requirements.md) に、
+        実装の順序は [doc/design.md](../blob/main/doc/design.md) §16 にあります。
+        既に予定されているものかどうか、先に確認していただけると助かります。
+  - type: textarea
+    id: problem
+    attributes:
+      label: どんな体験上の問題を解きたいか
+      description: 解決策ではなく、困っていることから書いてください。
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: 考えている案
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: どのあたりの話か
+      options:
+        - ゲームの仕組み（sim）
+        - バランス数値
+        - 画面・操作（app / UI）
+        - 文言・記事
+        - 開発環境・CI
+        - わからない
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 他に考えた案、見送った理由

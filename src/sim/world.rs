@@ -696,7 +696,10 @@ impl World {
     }
 
     /// 自国の地区のみ（領地は大会で移動する）。
-    pub fn owned_districts(&self, nation: NationId) -> impl Iterator<Item = (DistrictId, &District)> {
+    pub fn owned_districts(
+        &self,
+        nation: NationId,
+    ) -> impl Iterator<Item = (DistrictId, &District)> {
         self.districts
             .iter()
             .enumerate()

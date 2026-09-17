@@ -12,8 +12,8 @@ use std::sync::Arc;
 
 use bevy::prelude::*;
 
-use kbism::sim::defs::Defs;
 use kbism::sim::Game;
+use kbism::sim::defs::Defs;
 
 use state::{GameState, Phase};
 

@@ -1,0 +1,23 @@
+# 作業ツリーの改行は OS に任せ、リポジトリには LF で入れる。
+* text=auto eol=lf
+
+# ライセンス全文は配布元のまま触らない
+LICENSE-APACHE -text
+
+# スクリプトは実行環境が LF を要求する
+*.sh text eol=lf
+
+# バイナリ資産（差分を取らない）
+*.png binary
+*.jpg binary
+*.ogg binary
+*.wav binary
+*.ttf binary
+*.otf binary
+
+# ロックファイルは差分レビューの対象外にして PR を読みやすくする
+Cargo.lock linguist-generated=true -diff
+
+# 言語統計を Rust に寄せる（doc/ は文書、assets/ はデータ）
+doc/** linguist-documentation=true
+assets/** linguist-vendored=true

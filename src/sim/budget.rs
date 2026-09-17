@@ -99,7 +99,10 @@ impl Treasury {
 
     /// 収支見込み（FR-STAT-01 の常時表示）。
     pub fn balance_forecast(&self) -> f32 {
-        self.revenue_estimate - self.total_allocated() - self.committed_upkeep - self.carried_deficit
+        self.revenue_estimate
+            - self.total_allocated()
+            - self.committed_upkeep
+            - self.carried_deficit
     }
 }
 

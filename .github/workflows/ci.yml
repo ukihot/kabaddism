@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 整形と層分けは 10 秒で終わる。重いビルドを待たせない。
+  check:
+    name: 整形・層分け
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --check
+      - name: sim が bevy に依存していないこと（design.md §1.1）
+        run: sh tools/check_layering.sh
+
+  test:
+    name: テスト (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: bevy のビルドに必要なもの
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libudev-dev libwayland-dev libxkbcommon-dev
+      - run: cargo clippy --all-targets
+      - run: cargo test
+      # 画面なしで1年回る（design.md §16 の各フェーズ完了条件）
+      - name: ヘッドレスで1年完走
+        run: cargo run --bin harness -- --years 1 --quiet

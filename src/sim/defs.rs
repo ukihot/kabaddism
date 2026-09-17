@@ -13,6 +13,7 @@ use super::world::{AccessRule, AgeBand, FacilityKind, InfraField, Occupation, Te
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct Balance {
     pub calendar: CalendarDefs,
     pub time: TimeParams,
@@ -23,22 +24,6 @@ pub struct Balance {
     pub cup: CupParams,
     pub budget: BudgetParams,
     pub noise: NoiseParams,
-}
-
-impl Default for Balance {
-    fn default() -> Self {
-        Balance {
-            calendar: CalendarDefs::default(),
-            time: TimeParams::default(),
-            occupations: Vec::new(),
-            economy: EconomyParams::default(),
-            training: TrainingParams::default(),
-            events: EventParams::default(),
-            cup: CupParams::default(),
-            budget: BudgetParams::default(),
-            noise: NoiseParams::default(),
-        }
-    }
 }
 
 impl Balance {
@@ -740,6 +725,7 @@ impl Default for Scenario {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct DistrictSeed {
     pub name: String,
     pub is_home: bool,
@@ -750,21 +736,6 @@ pub struct DistrictSeed {
     pub facilities: Vec<FacilitySeed>,
     pub businesses: Vec<BusinessSeed>,
     pub teams: Vec<TeamSeed>,
-}
-
-impl Default for DistrictSeed {
-    fn default() -> Self {
-        DistrictSeed {
-            name: String::new(),
-            is_home: false,
-            infra: super::world::Infra::default(),
-            distance_to: Vec::new(),
-            cohorts: Vec::new(),
-            facilities: Vec::new(),
-            businesses: Vec::new(),
-            teams: Vec::new(),
-        }
-    }
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 使い方の質問・雑談
+    url: https://github.com/ukihot/kabaddism/discussions
+    about: 不具合かどうか分からないこと、設計の意図についての質問はこちらへ。
+  - name: 脆弱性の報告
+    url: https://github.com/ukihot/kabaddism/security/advisories/new
+    about: 公開の Issue ではなく、非公開の報告をお使いください。

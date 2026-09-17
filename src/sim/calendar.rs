@@ -47,7 +47,7 @@ impl Date {
 
     /// 7日周期の週末（FR-TIME-09）。町内カバディ大会の開催日。
     pub fn is_weekend(self) -> bool {
-        self.doy % 7 == 0
+        self.doy.is_multiple_of(7)
     }
 
     /// 通算日数。指標の推移や履歴の並べ替えに使う。
@@ -57,11 +57,7 @@ impl Date {
 
     /// この日から見て、次に `doy` が来るまでの日数。当日なら 0。
     pub fn days_until(self, doy: u16) -> u16 {
-        if doy >= self.doy {
-            doy - self.doy
-        } else {
-            DAYS_PER_YEAR - self.doy + doy
-        }
+        if doy >= self.doy { doy - self.doy } else { DAYS_PER_YEAR - self.doy + doy }
     }
 }
 

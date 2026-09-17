@@ -1,1 +1,15 @@
-/target
+# Rust
+/target/
+**/*.rs.bk
+
+# セーブ・スクリーンショット（実行時に生成される）
+/saves/
+*.png.tmp
+/shot*.png
+
+# エディタ・OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

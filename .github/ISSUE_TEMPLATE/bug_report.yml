@@ -1,0 +1,60 @@
+name: 不具合の報告
+description: クラッシュ、想定外の挙動、表示の崩れ
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        脆弱性の報告はここではなく [SECURITY.md](../blob/main/SECURITY.md) の手順でお願いします。
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きたか
+      placeholder: 世界大会のモーダルで「続ける」を押しても画面が戻らない
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: どうなるはずだったか
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 再現手順
+      description: |
+        乱数シードが分かると再現がとても楽になります。
+        タイトル画面に表示されているほか、`--seed N` で指定できます。
+      value: |
+        シード:
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: どちらで起きたか
+      options:
+        - ゲーム本体（cargo run）
+        - ヘッドレス（cargo run --bin harness）
+        - ビルド・テスト
+    validations:
+      required: true
+  - type: textarea
+    id: env
+    attributes:
+      label: 環境
+      value: |
+        OS:
+        Rust (`rustc -V`):
+        コミット (`git rev-parse --short HEAD`):
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログ・スクリーンショット
+      description: パニックした場合は `RUST_BACKTRACE=1` を付けた出力を貼ってください。

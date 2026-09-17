@@ -5,10 +5,10 @@
 
 use std::sync::Arc;
 
+use super::Game;
 use super::context::{self, DistrictContext};
 use super::defs::Defs;
 use super::world::{Life, World};
-use super::Game;
 
 pub fn recover(game: &mut Game) {
     let defs: Arc<Defs> = Arc::clone(&game.defs);
@@ -51,7 +51,8 @@ fn restore(life: &mut Life, ctx: &DistrictContext, defs: &Defs) {
     // 栄養は「実際に受け取った量」で決まる。生産量ではない（FR-ECO-07）。
     let need = eco.need_necessity.max(0.01);
     let fill = (life.receipt.necessity / need).clamp(0.0, 1.2);
-    let food_env = (ctx.infra.food * 0.4 + (ctx.canteen_capacity / ctx.population.max(1.0)).min(1.0) * 0.2)
+    let food_env = (ctx.infra.food * 0.4
+        + (ctx.canteen_capacity / ctx.population.max(1.0)).min(1.0) * 0.2)
         .clamp(0.0, 0.6);
     let target_nutrition = (fill * 0.8 + food_env).clamp(0.0, 1.0);
     life.condition.nutrition += (target_nutrition - life.condition.nutrition) * 0.15;
@@ -59,7 +60,7 @@ fn restore(life: &mut Life, ctx: &DistrictContext, defs: &Defs) {
     // 健康は栄養・医療・疲労の帰結
     let target_health = (0.45 + 0.3 * life.condition.nutrition + 0.25 * ctx.infra.medical
         - 0.3 * (life.condition.fatigue - 0.6).max(0.0))
-        .clamp(0.05, 1.0);
+    .clamp(0.05, 1.0);
     life.condition.health += (target_health - life.condition.health) * 0.08;
     life.condition.health = life.condition.health.clamp(0.05, 1.0);
 

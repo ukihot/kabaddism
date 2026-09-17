@@ -18,7 +18,8 @@ pub fn update(game: &mut Game) -> Environment {
     e.supply = (e.supply + s + (0.7 - e.supply) * 0.05).clamp(0.05, 1.0);
 
     // 受け止める能力は在庫と公共の稼働枠から決まる（乱数では動かさない）
-    let stock_cover = (game.world.stock_necessity / (game.world.population() as f32).max(1.0)).min(1.0);
+    let stock_cover =
+        (game.world.stock_necessity / (game.world.population() as f32).max(1.0)).min(1.0);
     let public_cover = (game.world.public_team_base / 40.0).min(1.0);
     let e = &mut game.world.environment;
     e.resilience = (0.25 + 0.5 * stock_cover + 0.25 * public_cover).clamp(0.0, 1.0);

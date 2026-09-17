@@ -250,8 +250,7 @@ impl Game {
         let overspend = (self.treasury.total_spent() + self.treasury.upkeep_paid
             - self.treasury.revenue_accrued)
             .max(0.0);
-        self.treasury.carried_deficit =
-            overspend * self.defs.balance.budget.deficit_carry;
+        self.treasury.carried_deficit = overspend * self.defs.balance.budget.deficit_carry;
 
         self.treasury.allocations = allocations;
         self.treasury.spent = [0.0; 8];
@@ -303,11 +302,7 @@ impl Game {
 
     /// 人物・施設・地区に履歴を残す（FR-SIM-10 / FR-POP-07）。
     pub fn history_note(&mut self, target: Target, date: Date, key: &str, detail: &str) {
-        let entry = HistoryEntry {
-            date,
-            text_key: key.to_string(),
-            detail: detail.to_string(),
-        };
+        let entry = HistoryEntry { date, text_key: key.to_string(), detail: detail.to_string() };
         match target {
             Target::District(d) => self.world.districts[d.index()].history.push(entry),
             Target::Cohort(c) => self.world.districts[c.district.index()].history.push(entry),
@@ -427,11 +422,7 @@ fn build_world(defs: &Defs, rngset: &mut RngSet) -> (World, Vec<Nation>, Treasur
                 children: cs.children,
                 dependents: cs.dependents,
             };
-            district.cohorts.push(Cohort {
-                age_band: cs.age_band,
-                headcount: cs.headcount,
-                life,
-            });
+            district.cohorts.push(Cohort { age_band: cs.age_band, headcount: cs.headcount, life });
         }
         world.districts.push(district);
 
@@ -582,11 +573,8 @@ fn build_world(defs: &Defs, rngset: &mut RngSet) -> (World, Vec<Nation>, Treasur
         life.ability = Ability { value: ps.ability, spread: 0.0 };
         life.talent = ps.talent;
         life.motivation = ps.motivation;
-        life.household = Household {
-            size: ps.household_size,
-            children: ps.children,
-            dependents: ps.dependents,
-        };
+        life.household =
+            Household { size: ps.household_size, children: ps.children, dependents: ps.dependents };
         // 住民共同チームがあれば所属する
         life.team = world
             .teams
@@ -631,10 +619,7 @@ fn build_world(defs: &Defs, rngset: &mut RngSet) -> (World, Vec<Nation>, Treasur
     // ── 初期在庫と予算 ──
     world.stock_necessity = world.population() as f32 * 3.0;
 
-    let mut treasury = Treasury {
-        allocations: sc.initial_allocations,
-        ..Default::default()
-    };
+    let mut treasury = Treasury { allocations: sc.initial_allocations, ..Default::default() };
     treasury.real.staff_total = staff_pools(&world, defs);
     treasury.real.staff_assigned = assigned_staff(&world);
     treasury.real.materials = 200.0;

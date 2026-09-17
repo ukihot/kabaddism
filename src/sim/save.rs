@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 
-use super::defs::Defs;
 use super::Game;
+use super::defs::Defs;
 
 pub const FORMAT_VERSION: u32 = 1;
 
@@ -26,7 +26,10 @@ pub enum SaveError {
     Encode(String),
     Decode(String),
     /// 非互換データ。破壊せず明示的に拒否する（FR-SAVE-03）。
-    Incompatible { found: u32, expected: u32 },
+    Incompatible {
+        found: u32,
+        expected: u32,
+    },
 }
 
 impl std::fmt::Display for SaveError {

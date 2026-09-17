@@ -79,7 +79,11 @@ fn main() {
                                 game.date,
                                 name,
                                 policy::target_name(&game, target),
-                                if issue.is_empty() { String::new() } else { format!("（{issue} への対応）") }
+                                if issue.is_empty() {
+                                    String::new()
+                                } else {
+                                    format!("（{issue} への対応）")
+                                }
                             );
                         }
                     } else {
@@ -137,14 +141,15 @@ fn main() {
             None => {}
         }
 
-        if !args.quiet && game.date.doy % 30 == 0 {
+        if !args.quiet && game.date.doy.is_multiple_of(30) {
             print_status(&game);
         }
     }
 
     println!("\n── {}年の終わり ──", end_year - 1);
     print_status(&game);
-    println!("実行した政策: {executed} 件 / 記事 {} 本 / 問題 {} 件（未解決 {}）",
+    println!(
+        "実行した政策: {executed} 件 / 記事 {} 本 / 問題 {} 件（未解決 {}）",
         game.news.articles.len(),
         game.issues.len(),
         game.issues.iter().filter(|i| i.closed.is_none()).count(),

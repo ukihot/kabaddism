@@ -22,24 +22,14 @@ const KEYS: [&str; 7] = [
 ];
 
 pub fn spawn(mut commands: Commands, bar: Single<Entity, With<TopBar>>, game: Res<GameRes>) {
-    let labels: Vec<String> =
-        KEYS.iter().map(|k| game.defs.text.get(k).to_string()).collect();
+    let labels: Vec<String> = KEYS.iter().map(|k| game.defs.text.get(k).to_string()).collect();
     commands.entity(*bar).with_children(|p| {
         for (i, name) in labels.into_iter().enumerate() {
-            p.spawn(Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: px(2),
-                ..default()
-            })
-            .with_children(|c| {
-                c.spawn(label(name, 11.0, INK_DIM));
-                c.spawn((
-                    StatCell(i),
-                    Text::new("-"),
-                    font(17.0),
-                    TextColor(INK),
-                ));
-            });
+            p.spawn(Node { flex_direction: FlexDirection::Column, row_gap: px(2), ..default() })
+                .with_children(|c| {
+                    c.spawn(label(name, 11.0, INK_DIM));
+                    c.spawn((StatCell(i), Text::new("-"), font(17.0), TextColor(INK)));
+                });
         }
     });
 }

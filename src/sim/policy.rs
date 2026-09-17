@@ -157,7 +157,11 @@ pub fn check(game: &Game, def: &PolicyDef, target: Target) -> Vec<Shortfall> {
 // ───────────────────────────── 実行 ─────────────────────────────
 
 /// 政策カードを実行する。成功すると `pending_days` が設定され、時間が進み始める（FR-TIME-02）。
-pub fn execute(game: &mut Game, policy_id: &str, target: Target) -> Result<ProjectId, Vec<Shortfall>> {
+pub fn execute(
+    game: &mut Game,
+    policy_id: &str,
+    target: Target,
+) -> Result<ProjectId, Vec<Shortfall>> {
     let defs = std::sync::Arc::clone(&game.defs);
     let Some(def) = defs.policy(policy_id) else {
         return Err(vec![Shortfall::UnknownPolicy]);
@@ -190,7 +194,12 @@ pub fn execute(game: &mut Game, policy_id: &str, target: Target) -> Result<Proje
     let lead_days = {
         let lo = def.lead_time[0];
         let hi = def.lead_time[1].max(lo);
-        if hi > lo { lo + (super::rng::range(&mut game.rng.daily, 0.0, (hi - lo + 1) as f32) as u16).min(hi - lo) } else { lo }
+        if hi > lo {
+            lo + (super::rng::range(&mut game.rng.daily, 0.0, (hi - lo + 1) as f32) as u16)
+                .min(hi - lo)
+        } else {
+            lo
+        }
     };
 
     let label = def.name.clone();
@@ -387,14 +396,18 @@ pub fn apply_effect(game: &mut Game, effect: &Effect, target: Target, project: P
             }
         }
 
-        Effect::BuildFacility { kind, name_key, capacity, staff_required, upkeep, access, night_open } => {
+        Effect::BuildFacility {
+            kind,
+            name_key,
+            capacity,
+            staff_required,
+            upkeep,
+            access,
+            night_open,
+        } => {
             let defs = std::sync::Arc::clone(&game.defs);
             for d in districts {
-                let name = format!(
-                    "{}{}",
-                    game.world.district(d).name,
-                    defs.text.get(name_key)
-                );
+                let name = format!("{}{}", game.world.district(d).name, defs.text.get(name_key));
                 game.world.facilities.push(Facility {
                     name,
                     kind: *kind,
@@ -602,7 +615,10 @@ pub fn apply_effect(game: &mut Game, effect: &Effect, target: Target, project: P
             let avail = game.treasury.real.available(StaffRole::Medic);
             let effective = capacity.min(avail.max(0.0));
             for d in districts {
-                game.world.district_mut(d).infra.add(super::world::InfraField::Medical, effective * 0.05);
+                game.world
+                    .district_mut(d)
+                    .infra
+                    .add(super::world::InfraField::Medical, effective * 0.05);
             }
         }
     }

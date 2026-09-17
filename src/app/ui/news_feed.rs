@@ -29,34 +29,25 @@ pub fn sync(
         .iter()
         .rev()
         .take(SHOWN)
-        .map(|a| {
-            (
-                format!("{}　{}", a.date, a.headline),
-                a.body.clone(),
-                a.pinned || a.weight >= 6,
-            )
-        })
+        .map(|a| (format!("{}　{}", a.date, a.headline), a.body.clone(), a.pinned || a.weight >= 6))
         .collect();
     let empty = game.defs.text.get("ui.news.empty").to_string();
 
-    commands
-        .entity(*feed)
-        .despawn_related::<Children>()
-        .with_children(|p| {
-            p.spawn(label(heading, 11.0, INK_DIM));
-            if rows.is_empty() {
-                p.spawn(label(empty, 13.0, INK_DIM));
-            }
-            for (head, body, major) in rows {
-                p.spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    margin: UiRect::bottom(px(3)),
-                    ..default()
-                })
-                .with_children(|c| {
-                    c.spawn(label(head, 14.0, if major { ACCENT } else { INK }));
-                    c.spawn(label(body, 12.0, INK_DIM));
-                });
-            }
-        });
+    commands.entity(*feed).despawn_related::<Children>().with_children(|p| {
+        p.spawn(label(heading, 11.0, INK_DIM));
+        if rows.is_empty() {
+            p.spawn(label(empty, 13.0, INK_DIM));
+        }
+        for (head, body, major) in rows {
+            p.spawn(Node {
+                flex_direction: FlexDirection::Column,
+                margin: UiRect::bottom(px(3)),
+                ..default()
+            })
+            .with_children(|c| {
+                c.spawn(label(head, 14.0, if major { ACCENT } else { INK }));
+                c.spawn(label(body, 12.0, INK_DIM));
+            });
+        }
+    });
 }
