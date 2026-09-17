@@ -8,7 +8,8 @@
 
 ## 環境
 
-Rust 1.96 以降（edition 2024）。`rustup` を入れれば他に要るものはありません。
+Rust 1.96 以降（edition 2024）。Windows と macOS は `rustup` だけで足ります。
+Linux は system ライブラリの開発ヘッダが要ります（README の「動かす」を参照）。
 
 ```sh
 cargo build                       # 初回は bevy のビルドに10分以上かかります

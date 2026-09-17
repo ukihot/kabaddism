@@ -40,11 +40,15 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
+      # Linux で -sys クレートが要求する開発ヘッダ。
+      # libudev-sys / wayland-sys / yeslogic-fontconfig-sys に対応する。
+      # fontconfig は system_font_discovery（和文フォント探索）が引き込む。
       - name: bevy のビルドに必要なもの
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libudev-dev libwayland-dev libxkbcommon-dev
+          sudo apt-get install -y --no-install-recommends \
+            libudev-dev libwayland-dev libxkbcommon-dev libfontconfig-dev
       - run: cargo clippy --all-targets
       - run: cargo test
       # 画面なしで1年回る（design.md §16 の各フェーズ完了条件）

@@ -14,6 +14,16 @@ Rust + [Bevy 0.19](https://bevy.org/) 製。シングルプレイ、オンライ
 
 必要なもの: [Rust](https://rustup.rs/) 1.96 以降（edition 2024）。Windows 10/11 x86_64 が主対象、Linux x86_64 が副。
 
+Linux では、bevy が使う -sys クレートの開発ヘッダが要ります（Debian / Ubuntu の場合）。
+
+```sh
+sudo apt-get install libudev-dev libwayland-dev libxkbcommon-dev libfontconfig-dev
+```
+
+`libfontconfig-dev` が無いと `yeslogic-fontconfig-sys` のビルドが
+`Package fontconfig was not found in the pkg-config search path` で止まります。
+日本語フォントをシステムから探すために必要です。
+
 ```sh
 git clone https://github.com/ukihot/kabaddism.git
 cd kabaddism

@@ -649,17 +649,24 @@ pub struct Nation {              // 他国（簡易モデル）
 
 ```
 ┌────────────────────────────────────────────────────┐
-│ 年/月/日  大会まで N日 │ 人口 GDP 予算 平均能力 代表 │ ← top_bar
+│ 日付 大会まで 人口 GDP 予算残 平均能力 代表戦力      │ ← top_bar
 ├──────────────┬─────────────────────────────────────┤
 │              │                                     │
 │  政策パネル   │        町 / 国 の地図                │
-│  （推奨3件   │   施設・人の動き・事業の進捗          │
+│  （推奨8件   │   施設・人の動き・事業の進捗          │
 │   + 全一覧） │   地図切替: 生活/育成/経済/領土       │
 │              │                                     │
 ├──────────────┴─────────────────────────────────────┤
 │ ニュース（日付順に流れる。クリックで対象へ）          │ ← news_feed
 └────────────────────────────────────────────────────┘
+        ＋ 全面に重なるモーダル層（予算編成 / 世界大会）
 ```
+
+政策パネルは幅 360px 固定、ニュースは高さ 190px 固定、地図が残りを占める。
+1280x720 でも政策カードの費用・期間・対象が省略されない幅として 360px を採った（FR-UI-05）。
+
+政策パネルの末尾には「何もせず1日」を置く。推奨枠が全て実行不能でも
+時間を進められないと詰むため、`Planning` から `Advancing` への出口を常に1つ残す。
 
 ### 13.2 情報の3段階（FR-UI-02）
 
@@ -673,14 +680,28 @@ pub struct Nation {              // 他国（簡易モデル）
 
 ### 13.3 sim → UI の同期
 
+UI は毎フレーム全再構築しない。同期の粒度は部品ごとに変える。
+
+| 部品 | 組み立て | 更新 |
+|---|---|---|
+| `top_bar` | `OnEnter(GameState::InGame)` で7セルを一度だけ並べる | `Res<GameRes>` の変更検知。値の `Text` だけ書き換える |
+| `policy_panel` | `OnEnter(Phase::Planning)` | 組み直さない。`DespawnOnExit(Phase::Planning)` で消える |
+| `news_feed` | 記事本数が変わったときだけ | 変わらなければ何もしない |
+| `budget_screen` / `cup_screen` | `OnEnter(Phase::Budget)` / `OnEnter(Phase::Cup)` | `DespawnOnExit` で消える |
+
 ```rust
-fn sync_from_sim(game: Res<Game>, mut q: Query<...>) {
+fn sync(game: Res<GameRes>, mut cells: Query<(&StatCell, &mut Text)>) {
     if !game.is_changed() { return; }
-    // 変更のあった日だけ UI ノードを更新
+    // 変わった値のセルだけ書き換える
 }
 ```
 
-UI は毎フレーム全再構築しない。`Res<Game>` の変更検知 + `DayAdvanced` メッセージで差分更新する。ニュース行は上限（表示100件）を持つリングで、それ以上は履歴画面から検索する。
+フェーズが変わると中身ごと消えるものは、変更検知を書く必要がない。
+`DespawnOnExit` に任せるほうが、状態と表示のずれが起きる余地が小さい。
+
+ニュース行は下部に12件を出し、それ以上は履歴画面（フェーズ8）から検索する。
+日付順に1本ずつ流す演出を入れるのはフェーズ9で、そのとき §3.4 の
+`DayAdvanced` メッセージを足す。
 
 ---
 
@@ -720,19 +741,34 @@ struct SaveFile {
 
 UI はテストしない。手動チェックリスト（AC-04）で見る。
 
-ヘッドレスのプレイハーネス:
+ヘッドレスのプレイハーネス（`src/bin/harness.rs`）:
 
 ```rust
-// tests/playthrough.rs
-let mut game = Game::new(seed, &defs);
-while game.date.year == 1 {
-    let card = strategy.pick(&game);
-    game.execute_policy(card);
-    while game.pending_days > 0 { game.step_day(); }
+// cargo run --release --bin harness -- --seed 42 --years 1
+let mut game = Game::new(seed, Arc::clone(&defs));
+while game.date.year < end_year {
+    if game.pending_days == 0 {
+        let (id, target, _) = pick(&game);        // 推奨枠から実行可能なものを1枚
+        game.execute_policy(&id, target);
+    }
+    match game.advance_all() {                    // 年次イベントに当たるまで進む
+        Some(StopReason::Budget) => game.apply_budget(game.budget_briefing().default_plan()),
+        Some(StopReason::Cup)    => { game.cup_prepare(); game.cup_run(); }
+        None => {}
+    }
 }
 ```
 
+`#[test]` ではなくバイナリにしてあるのは、シードと年数を変えながら**出力を読む**
+道具だから。テストは合否しか返さないが、バランス調整で見たいのは数字の推移そのもの。
+CI では `--years 1 --quiet` で完走だけを確認する（AC-01）。
+
 `app` を一切構築せずに1年が回る。これがこの設計の最大の利点で、バランス調整のイテレーションが数秒で済む。
+
+> 現状（フェーズ7時点）: 上表のうち自動テストとして書けているのは
+> セーブ往復（`sim::rng` の RON 往復）と、CI の完走のみ。
+> 決定論・会計恒等式・政策回帰は `harness` の目視と `debug_assert!` に頼っている。
+> フェーズ9 までに上表へ揃える。
 
 ---
 
