@@ -16,7 +16,7 @@ v1.0 / 対象: MVP
 │  bevy (app 層)                               │
 │   描画 / UI / 入力 / 音 / 画面遷移 / ファイルIO │
 │                                             │
-│   Resource<Game> ──────┐                    │
+│   Resource<GameRes> ───┐                    │
 └────────────────────────┼────────────────────┘
                          │ 呼び出しは step_day() と read-only 参照のみ
 ┌────────────────────────▼────────────────────┐
@@ -54,6 +54,8 @@ v1.0 / 対象: MVP
 ```
 src/
   main.rs              App 構築、プラグイン登録
+  bin/
+    harness.rs         ヘッドレスのプレイハーネス（§15）。bevy を構築せずに1年回す
   sim/
     mod.rs             Game（最上位状態）、step_day()
     world.rs           District / Facility / Cohort / Person / Team のデータ
@@ -76,10 +78,12 @@ src/
     save.rs            セーブ/ロード
     defs.rs            外部データ定義（カード/施設/イベント/文面）の型
   app/
-    mod.rs             KabaddismPlugin
-    state.rs           GameState / InGameState
+    mod.rs             KabaddismPlugin、Resource<GameRes>
+    state.rs           GameState / Phase
+    title.rs           タイトル画面
     tick_driver.rs     pending_days → step_day() のフレーム分割実行
     ui/
+      mod.rs           画面骨格、配色、共通ウィジェット
       top_bar.rs       カレンダー + 国家ステータス
       news_feed.rs     下部ニュース
       policy_panel.rs  政策カード選択
@@ -87,8 +91,6 @@ src/
       inspector.rs     人物/施設/地区の詳細（情報3段階の②③）
       budget_screen.rs 年次予算編成
       cup_screen.rs    世界大会
-    assets.rs          RON データのロード
-    save_io.rs         ファイル入出力
 assets/
   data/
     policies.ron
@@ -98,9 +100,17 @@ assets/
     news/*.ron
   text/ja.ron
   sprites/
+tools/
+  check_layering.sh    sim が bevy を import していないことの確認（§1.1）
 ```
 
 ファイル数は多いが、いずれも単一責務で 200〜400 行を想定。1ファイルに混ぜるとバランス調整時に衝突する。
+
+`app/assets.rs`（RON のロード）と `app/save_io.rs`（ファイル入出力）は**作らない**。
+`sim::defs::Defs::load_default()` と `sim::save::{write_to, read_from, slot_path}` が
+すでに探索・読み書き・保存先の決定まで持っており、app 側で包み直す理由がないため。
+bevy の `AssetServer` を経由しないのは、`Defs` がフレームをまたがない同期ロードで足り、
+ロード完了待ちの状態を1つ増やさずに済むから。
 
 ---
 
@@ -116,15 +126,14 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "0.19.1", default-features = false, features = [
-  "bevy_winit", "bevy_window", "bevy_render", "bevy_core_pipeline",
-  "bevy_sprite", "bevy_ui", "bevy_ui_render",
-  "bevy_text", "default_font", "bevy_asset", "bevy_state", "bevy_log",
-  "bevy_picking", "x11", "multi_threaded",
+  "ui",                      # bevy_ui + winit + state + asset + picking 一式
+  "2d",                      # Camera2d とスプライト（地図: フェーズ8）
+  "system_font_discovery",   # 日本語を出す。埋め込み FiraMono には和文グリフがない
 ] }
 serde = { version = "1", features = ["derive"] }
-ron = "0.11"
-rand = { version = "0.9", default-features = false, features = ["std"] }
-rand_chacha = "0.9"
+ron = { version = "0.12", features = ["integer128"] }  # rand_chacha の word_pos は u128
+rand = "0.10"
+rand_chacha = { version = "0.10", features = ["serde"] }
 
 [dev-dependencies]
 # ベンチは criterion を入れず、まずは #[test] + Instant で足りる
@@ -135,7 +144,26 @@ opt-level = 1          # sim の日次計算が debug だと遅すぎる
 opt-level = 3
 ```
 
-音声・GLTF・3D・アニメーションの機能は落とす。`bevy_feathers` / `bevy_ui_widgets` は v0.19 時点で実験的なため v1 では使わず、必要なウィジェットは `bevy_ui` の `Node` + `Interaction` で自前実装する（種類は5つ程度で足りる）。
+音声・GLTF・3D・アニメーションの機能は落とす。bevy 0.19 の feature は
+`ui` / `2d` / `3d` / `audio` という上位のまとまりに整理されており、
+個別の `bevy_*` を列挙するより `ui` + `2d`（= `3d` と `audio` を外す）のほうが
+同じ範囲を短く、かつ将来の再編に強く表せる。
+
+`bevy_feathers` / `bevy_ui_widgets` は v0.19 時点で実験的なため v1 では使わず、必要なウィジェットは `bevy_ui` の `Node` + `Interaction` で自前実装する（種類は5つ程度で足りる）。`ui` feature が `bevy_ui_widgets` を連れてくるが、使わなければよい。
+
+**フォント**: 表示文字列はすべて日本語なので、埋め込みの `FiraMono-subset.ttf` では
+1文字も出ない。`system_font_discovery` を有効にし、`TextFont.font` に
+`FontSource::SansSerif` を渡してシステムのフォントを引く。和文フォントを
+`assets/` に同梱する方針へ切り替えるときは、この feature を外して
+`FontSource::Handle` に変えるだけで済む。
+
+> 既知のログ: 起動時に `ICU4X data error: No segmentation model for complex script: Chinese/Japanese`
+> が出る。行分割は UAX #14 が CJK を処理するため影響はなく（`icu_segmenter` 自身が
+> 「LineSegmenter は CJ 辞書を必要としない」と明記している）、出所は parley が
+> `WordSegmenter::new_for_non_complex_scripts` を固定で使っていること。
+> 影響するのは日本語の**単語境界**（ダブルクリック選択・単語単位のキャリブレーション）だけ。
+> このログは `icu_provider` が `debug_assertions` 時のみ `eprintln!` するもので、
+> リリースビルドでは消える。辞書を効かせたい場合は parley 側の変更が要る。
 
 ### 3.2 状態遷移
 
@@ -175,25 +203,37 @@ app.add_systems(Update, (
 ).chain().run_if(in_state(GameState::InGame)));
 ```
 
-`sim` を触るシステムは `run_pending_days` ただ1つ。他はすべて `Res<Game>` の読み取り。書き込み競合が原理的に起きない。
+`sim` を触るシステムは `run_pending_days` と、プレイヤー操作を表すボタンハンドラ
+（政策実行・予算確定・大会実行）だけ。これらは互いに排他な `Phase` でしか動かない。
+他はすべて `Res<GameRes>` の読み取りで、書き込み競合が原理的に起きない。
+
+`Game` は bevy を知らないので（§1.1）、`Resource` を実装するのは app 側の
+包み紙 `GameRes(pub Game)` の仕事。`Deref` / `DerefMut` を導出するので
+呼び出し側は `Game` をそのまま触っているように書ける。
 
 ### 3.4 フレームを止めない進行（NFR-03）
 
 60日進行を1フレームで回すとウィンドウが固まる。フレーム予算で分割する。
 
 ```rust
-fn run_pending_days(mut game: ResMut<Game>, mut ui_ev: MessageWriter<DayAdvanced>) {
+fn run_pending_days(mut game: ResMut<GameRes>, mut next: ResMut<NextState<Phase>>) {
     let budget = Instant::now() + Duration::from_millis(6); // 1フレーム6ms上限
     while game.pending_days > 0 && Instant::now() < budget {
-        let stop = game.step_day();          // ← sim 呼び出しはここだけ
-        game.pending_days -= 1;
-        ui_ev.write(DayAdvanced { date: game.date });
-        if let Some(reason) = stop { /* Budget / Cup へ遷移して break */ }
+        match game.advance_one() {           // ← sim 呼び出しはここだけ
+            Some(StopReason::Budget) => { next.set(Phase::Budget); return }
+            Some(StopReason::Cup)    => { next.set(Phase::Cup);    return }
+            None => {}
+        }
     }
+    if game.pending_days == 0 { next.set(Phase::Planning); }
 }
 ```
 
 進行速度（1日あたりの演出時間）はプレイヤー設定で変えられるようにし、「早送り」時はこの予算いっぱいまで回す。ニュースは日付順にキューへ積まれ、UI 側が独自のペースで流す。
+
+この「日付順のキュー」を作るときに、1日進むごとの `DayAdvanced` メッセージを足す。
+それまでは読む側がいないので**作らない**（フェーズ9）。フェーズ7〜8 の news_feed は
+記事本数の変化を見て組み直すだけで足りる。
 
 > ponytail: `Instant` による時間予算は素朴だが正しい。日数が巨大化しない（最大でも数十日）ため、ワーカースレッドへ逃がす必要はない。必要になったら `AsyncComputeTaskPool` へ移す。
 
@@ -578,6 +618,10 @@ pub struct Treasury {
 ```
 
 - 画面は「次年度収入見込み / 継続費用 / 残り配分可能額」を先に提示し、その上でスライダで8分野へ配分する。
+- スライダの初期値は `BudgetBriefing::default_plan()`（配分可能額の固定重み按分）。
+  ヘッドレスのハーネスも同じ関数を使う — 自動プレイと UI の既定値が食い違うと
+  バランス調整の実測が UI の挙動を予測しなくなるため、1箇所に置く。
+  重みを `balance.ron` へ出すのはフェーズ9。
 - 収入を超える配分を**許可する**。結果は翌年度の事業停止として現れる（FR-BUD-06）。
 - 政策カードの `initial_cost` は対応する分野の枠から引く。枠が空でも実資源がなければ `Stalled`（FR-BUD-05）。
 
@@ -704,11 +748,20 @@ while game.date.year == 1 {
 | 4 | 政策カード20枚 + 事業 + 予算編成 | 政策回帰テストが全カードで通る |
 | 5 | イベント15種 + ニュース + スレッド | 続報が1本の線になる |
 | 6 | 世界大会 + 領地 + 他国 | 1年サイクルがハーネスで完結 |
-| 7 | bevy 側: 状態遷移 / tick_driver / top_bar / news_feed / policy_panel | 画面から1年遊べる |
-| 8 | 地図 / inspector（情報3段階）/ 予算・大会画面 | AC-04 の手動チェックリストが通る |
+| 7 | bevy 側: 状態遷移 / tick_driver / top_bar / news_feed / policy_panel / 予算・大会の最小モーダル | 画面から1年遊べる |
+| 8 | 地図 / inspector（情報3段階）/ 予算・大会画面の作り込み / オートセーブ | AC-04 の手動チェックリストが通る |
 | 9 | バランス調整、演出、AC 全項目の確認 | v1 |
 
 フェーズ1〜6 は描画がなくても検証できる。**UI は最後**でよく、それによって最も不確実な経済モデルに開発時間を集中できる。
+
+予算編成と世界大会の画面は 7 と 8 に割れる。「画面から1年遊べる」には
+年次イベントで止まったあと**先へ進める手段**が要るので、提示と確定だけの
+モーダルをフェーズ7に置く（`budget_screen.rs` / `cup_screen.rs`）。
+分野別スライダと代表の差し替えはフェーズ8 で同じファイルに足す。
+
+オートセーブ（§14）はフェーズ8。`sim::save` 側は完成しているが、
+呼び出しにはファイル書き込みの失敗をプレイヤーへ見せる経路が要り、
+それは inspector と同じ通知の仕組みに乗る。
 
 ---
 

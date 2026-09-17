@@ -127,4 +127,13 @@ impl BudgetBriefing {
     pub fn allocatable(&self) -> f32 {
         (self.revenue_estimate - self.committed_upkeep - self.carried_deficit).max(0.0)
     }
+
+    /// 既定の配分。UI で触らずに確定したときと、ヘッドレス自動プレイの両方が使う。
+    /// 分野ごとの重みはフェーズ9で balance.ron に出す。
+    pub fn default_plan(&self) -> [f32; 8] {
+        // ponytail: 固定重み。プレイヤーが配分をいじれるようになったら初期値に格下げする。
+        const WEIGHTS: [f32; 8] = [0.16, 0.13, 0.15, 0.13, 0.17, 0.12, 0.09, 0.05];
+        let pot = self.allocatable().max(0.0);
+        WEIGHTS.map(|w| pot * w)
+    }
 }

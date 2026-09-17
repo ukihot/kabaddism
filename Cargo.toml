@@ -7,6 +7,13 @@ edition = "2024"
 # フェーズ1〜6 は sim 層（bevy 非依存）のみ。bevy は app 層（フェーズ7）で追加する。
 # sim が bevy を import しない規律は tools/check_layering.sh で担保する。
 [dependencies]
+# design.md §3.1 は機能を列挙していたが、0.19 の feature 階層では
+# `ui` + `2d` が同じ範囲（3D と音声を落とす）を 2 行で表す。
+bevy = { version = "0.19.1", default-features = false, features = [
+  "ui",                      # bevy_ui + winit + state + asset + picking 一式
+  "2d",                      # Camera2d とスプライト（地図: フェーズ8）
+  "system_font_discovery",   # 日本語を出す。埋め込み FiraMono には和文グリフがない
+] }
 serde = { version = "1", features = ["derive"] }
 ron = { version = "0.12", features = ["integer128"] }  # rand_chacha の word_pos は u128
 rand = "0.10"
