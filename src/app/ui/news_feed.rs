@@ -5,6 +5,7 @@
 use bevy::prelude::*;
 
 use super::super::GameRes;
+use super::inspector::OpenSubject;
 use super::{ACCENT, INK, INK_DIM, NewsFeed, label};
 
 /// 一度に見せる本数。これを超える分は履歴から探す（§13.3）。
@@ -23,13 +24,20 @@ pub fn sync(
     *last = n;
 
     let heading = game.defs.text.get("ui.news.heading").to_string();
-    let rows: Vec<(String, String, bool)> = game
+    let rows: Vec<(String, String, bool, Option<OpenSubject>)> = game
         .news
         .articles
         .iter()
         .rev()
         .take(SHOWN)
-        .map(|a| (format!("{}　{}", a.date, a.headline), a.body.clone(), a.pinned || a.weight >= 6))
+        .map(|a| {
+            (
+                format!("{}　{}", a.date, a.headline),
+                a.body.clone(),
+                a.pinned || a.weight >= 6,
+                a.subjects.first().map(|s| OpenSubject(*s)),
+            )
+        })
         .collect();
     let empty = game.defs.text.get("ui.news.empty").to_string();
 
@@ -38,13 +46,17 @@ pub fn sync(
         if rows.is_empty() {
             p.spawn(label(empty, 13.0, INK_DIM));
         }
-        for (head, body, major) in rows {
-            p.spawn(Node {
+        for (head, body, major, subject) in rows {
+            let row = Node {
                 flex_direction: FlexDirection::Column,
                 margin: UiRect::bottom(px(3)),
                 ..default()
-            })
-            .with_children(|c| {
+            };
+            let mut spawned = match subject {
+                Some(s) => p.spawn((row, Button, s)),
+                None => p.spawn(row),
+            };
+            spawned.with_children(|c| {
                 c.spawn(label(head, 14.0, if major { ACCENT } else { INK }));
                 c.spawn(label(body, 12.0, INK_DIM));
             });

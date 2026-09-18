@@ -3,10 +3,13 @@
 //! `sim` を**読むだけ**。書き換えるのは [`tick_driver::run_pending_days`] と、
 //! プレイヤー操作を表す少数のボタンハンドラのみ。書き込み競合は原理的に起きない。
 
+pub mod autosave;
 pub mod state;
 pub mod tick_driver;
 pub mod title;
 pub mod ui;
+
+use autosave::AutosaveCounter;
 
 use std::sync::Arc;
 
@@ -31,6 +34,8 @@ impl Plugin for KabaddismPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>()
             .add_sub_state::<Phase>()
+            .init_resource::<AutosaveCounter>()
+            .init_resource::<ui::budget_screen::BudgetDraft>()
             .add_systems(Startup, setup_camera)
             .add_systems(OnEnter(GameState::Boot), boot)
             .add_systems(OnEnter(GameState::Title), title::spawn)
@@ -42,18 +47,37 @@ impl Plugin for KabaddismPlugin {
             )
             .add_systems(OnEnter(Phase::Planning), ui::policy_panel::spawn)
             .add_systems(OnEnter(Phase::Advancing), ui::policy_panel::spawn_advancing)
-            .add_systems(OnEnter(Phase::Budget), ui::budget_screen::spawn)
-            .add_systems(OnEnter(Phase::Cup), ui::cup_screen::spawn)
+            // オートセーブは年次イベント直前（design.md §14）
+            .add_systems(
+                OnEnter(Phase::Budget),
+                (autosave::on_enter_modal, ui::budget_screen::spawn).chain(),
+            )
+            .add_systems(
+                OnEnter(Phase::Cup),
+                (autosave::on_enter_modal, ui::cup_screen::spawn).chain(),
+            )
             .add_systems(
                 Update,
                 (
                     ui::policy_panel::click.run_if(in_state(Phase::Planning)),
                     tick_driver::run_pending_days.run_if(in_state(Phase::Advancing)),
-                    ui::budget_screen::click.run_if(in_state(Phase::Budget)),
-                    (ui::cup_screen::click_run, ui::cup_screen::click_close)
+                    (
+                        ui::budget_screen::sync,
+                        ui::budget_screen::click_step,
+                        ui::budget_screen::click_confirm,
+                    )
+                        .run_if(in_state(Phase::Budget)),
+                    (
+                        ui::cup_screen::sync_preview,
+                        ui::cup_screen::click_swap,
+                        ui::cup_screen::click_run,
+                        ui::cup_screen::click_close,
+                    )
                         .run_if(in_state(Phase::Cup)),
                     // sim → 表示の一方向同期（§13.3）
                     (ui::top_bar::sync, ui::news_feed::sync),
+                    // ニュース見出しからの遷移先（FR-NEWS-03 / §13.2）。Phase を問わず開閉できる。
+                    (ui::inspector::open, ui::inspector::close),
                 )
                     .chain()
                     .run_if(in_state(GameState::InGame)),

@@ -5,6 +5,7 @@
 
 pub mod budget_screen;
 pub mod cup_screen;
+pub mod inspector;
 pub mod news_feed;
 pub mod policy_panel;
 pub mod top_bar;

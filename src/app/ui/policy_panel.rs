@@ -10,6 +10,7 @@ use kbism::sim::ids::Target;
 use kbism::sim::policy::{self, Shortfall};
 
 use super::super::GameRes;
+use super::super::autosave::{self, AutosaveCounter};
 use super::super::state::Phase;
 use super::{ACCENT, INK, INK_DIM, PolicyPanel, WARN, button, label};
 
@@ -99,14 +100,17 @@ pub fn spawn(mut commands: Commands, panel: Single<Entity, With<PolicyPanel>>, g
 /// 押されたら時間が動き出す。`sim` を書き換える数少ない入口のひとつ。
 pub fn click(
     mut game: ResMut<GameRes>,
+    mut autosave_counter: ResMut<AutosaveCounter>,
     mut next: ResMut<NextState<Phase>>,
     policies: Query<(&Interaction, &PolicyChoice), Changed<Interaction>>,
     waits: Query<&Interaction, (Changed<Interaction>, With<WaitChoice>)>,
 ) {
     for (interaction, choice) in &policies {
-        if *interaction == Interaction::Pressed
-            && game.execute_policy(&choice.id, choice.target).is_ok()
-        {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+        autosave::run(&game, &mut autosave_counter);
+        if game.execute_policy(&choice.id, choice.target).is_ok() {
             next.set(Phase::Advancing);
             return;
         }
@@ -133,7 +137,7 @@ pub fn spawn_advancing(
     });
 }
 
-fn field_key(f: BudgetField) -> &'static str {
+pub(super) fn field_key(f: BudgetField) -> &'static str {
     match f {
         BudgetField::Education => "ui.field.education",
         BudgetField::Medical => "ui.field.medical",

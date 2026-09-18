@@ -21,6 +21,17 @@ pub struct Breakdown {
     pub subject: Option<Subject>,
 }
 
+impl Breakdown {
+    /// inspector の③「なぜ」に出す1行。UI 側では再計算しない（NFR-09）。
+    pub fn describe(&self, text: &super::defs::TextTable) -> String {
+        let mut s = text.get(&self.text_key).to_string();
+        for (i, n) in self.numbers.iter().enumerate() {
+            s = s.replace(&format!("{{{i}}}"), &format!("{n:.1}"));
+        }
+        s
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct DistrictStats {
     pub district: u16,

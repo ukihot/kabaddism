@@ -80,9 +80,15 @@ pub fn district_value(game: &Game, id: DistrictId) -> f32 {
     pop * 0.5 + facilities + infra
 }
 
-/// 代表選考: `ability × condition` の上位を自動提示する。プレイヤーは差し替えられる。
-pub fn propose_squad(game: &Game) -> Vec<PersonId> {
-    let size = game.defs.balance.cup.squad_size;
+/// 代表としての評価値。選考も差し替えも同じ物差しを使う。
+pub fn rating(game: &Game, id: PersonId) -> f32 {
+    let p = game.world.person(id);
+    p.life.ability.value * p.life.condition.factor()
+}
+
+/// 代表になれる人物を、評価の高い順に並べる。
+/// 同値のときは添字順。決定論のため（NFR-01）。
+pub fn ranked_candidates(game: &Game) -> Vec<PersonId> {
     let mut cands: Vec<(usize, f32)> = game
         .world
         .people
@@ -95,11 +101,39 @@ pub fn propose_squad(game: &Game) -> Vec<PersonId> {
         })
         .map(|(i, p)| (i, p.life.ability.value * p.life.condition.factor()))
         .collect();
-    // 同値のときは添字順。決定論のため（NFR-01）。
     cands.sort_by(|a, b| {
         b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal).then(a.0.cmp(&b.0))
     });
-    cands.into_iter().take(size).map(|(i, _)| PersonId::from_index(i)).collect()
+    cands.into_iter().map(|(i, _)| PersonId::from_index(i)).collect()
+}
+
+/// 代表選考: `ability × condition` の上位を自動提示する。プレイヤーは差し替えられる。
+pub fn propose_squad(game: &Game) -> Vec<PersonId> {
+    ranked_candidates(game).into_iter().take(game.defs.balance.cup.squad_size).collect()
+}
+
+/// 代表の差し替え（FR-CUP-02）。登録人数は変えず、最も評価の低い登録者と入れ替える。
+/// 既に登録済みの人物を渡したときは何も変えない。
+pub fn swap_in(game: &Game, squad: &[PersonId], incoming: PersonId) -> Vec<PersonId> {
+    let mut next = squad.to_vec();
+    if next.contains(&incoming) {
+        return next;
+    }
+    let weakest = next
+        .iter()
+        .enumerate()
+        .min_by(|a, b| {
+            rating(game, *a.1)
+                .partial_cmp(&rating(game, *b.1))
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then(b.0.cmp(&a.0))
+        })
+        .map(|(i, _)| i);
+    match weakest {
+        Some(i) => next[i] = incoming,
+        None => next.push(incoming),
+    }
+    next
 }
 
 /// 大会前の確定処理。ここで計算した値を UI に渡し、結果処理でも同じ値を使う。
